@@ -1,0 +1,37 @@
+name: China IP list
+
+on: 
+  # push: 
+  #   branches:
+  #     - master
+  watch:
+    types: started
+  schedule:
+    - cron: 0 0 * * * 
+
+env:
+  REPO_TOKEN: ${{ secrets.REPO_TOKEN }}
+  TZ: Asia/Shanghai
+
+jobs:
+  build:
+    if: github.event.repository.owner.id == github.event.sender.id
+    runs-on: Ubuntu-20.04
+
+    steps:
+    - name: Combine
+      run: |
+        qqwry="$(curl -kLfsm 5 https://raw.githubusercontent.com/metowolf/iplist/master/data/special/china.txt)"
+        ipipnet="$(curl -kLfsm 5 https://raw.githubusercontent.com/17mon/china_ip_list/master/china_ip_list.txt)"
+        clang="$(curl -kLfsm 5 https://ispip.clang.cn/all_cn.txt)"
+        iplist="$qqwry
+        $ipipnet
+        $clang"
+        echo "${iplist}" | uniq > china_ip_list.txt
+
+    - name: Apply
+      run: |
+        Emoji=("🎉" "🤞" "✨" "🎁" "🎈" "🎄" "🎨" "💋" "🍓" "🍕" "🍉" "💐" "🌴" "🚀" "🛸" "🗽" "⛅" "🌈" "🔥" "⛄" "🐶" "🏅" "🦄" "🐤")
+        git add .
+        git commit -m "${Emoji[$[$RANDOM % ${#Emoji[@]}]]} Sync $(date +%Y-%m-%d" "%H:%M:%S)"
+        git push -f
